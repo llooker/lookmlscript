@@ -1,0 +1,18 @@
+[db]
+#Native Windows:
+server = DESKTOP-UD34EQ9\SQLEXPRESS
+#Unix Like:
+#server = 192.168.0.1
+database = lookertest
+username = python
+password = yourpassword
+#Native Windows:
+driver = {SQL Server}
+#Unix Like:
+#driver = {ODBC Driver 13 for SQL Server}
+
+[git]
+#needs to be filled out on windows, can be left blank on unix like systems
+exePath = "C:\\Program Files\\Git\\git-cmd.exe"
+#refers to the folder holding the projects
+outputPath = output

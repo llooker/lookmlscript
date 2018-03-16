@@ -1,0 +1,717 @@
+Help on module lib.lookML in lib:
+
+NAME
+    lib.lookML
+
+CLASSES
+    builtins.object
+        Explore
+        Field
+            Dimension
+            DimensionGroup
+            Filter
+            Measure
+            Parameter
+        Join
+        Properties
+        Property
+        lookMLObject
+            Model
+            View
+        viewFactory
+    
+    class Dimension(Field)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Method resolution order:
+     |      Dimension
+     |      Field
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  isPrimaryKey(self)
+     |  
+     |  setPrimaryKey(self)
+     |  
+     |  setTier(self, tiers=[])
+     |  
+     |  unSetPrimaryKey(self)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Field:
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Field:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class DimensionGroup(Field)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Method resolution order:
+     |      DimensionGroup
+     |      Field
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Field:
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Field:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class Explore(builtins.object)
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  addJoin(self, join)
+     |  
+     |  getJoin(self, key)
+     |  
+     |  getJoins(self)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class Field(builtins.object)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class Filter(Field)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Method resolution order:
+     |      Filter
+     |      Field
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Field:
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Field:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class Join(builtins.object)
+     |  Instantiates a LookML join object...
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  setIdentifier(self, identifier)
+     |  
+     |  setName(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  identifier
+     |  
+     |  properties
+    
+    class Measure(Field)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Method resolution order:
+     |      Measure
+     |      Field
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Field:
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Field:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class Model(lookMLObject)
+     |  Method resolution order:
+     |      Model
+     |      lookMLObject
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  addExplore(self, explore)
+     |  
+     |  getExplore(self, key)
+     |  
+     |  getExplores(self)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from lookMLObject:
+     |  
+     |  setIdentifier(self, identifier)
+     |  
+     |  setName(self, name)
+     |  
+     |  setOutFilePath(self, outFilePath)
+     |  
+     |  writeFile(self, overWriteExisting=True)
+     |      Checks to see if the file exists before writing
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from lookMLObject:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class Parameter(Field)
+     |  Base class for fields in LookML, only derived/child types should be instantiated
+     |  
+     |  Method resolution order:
+     |      Parameter
+     |      Field
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from Field:
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  hide(self)
+     |  
+     |  ref(self)
+     |  
+     |  setDBColumn(self, dbColumn, changeIdentifier=True)
+     |  
+     |  setLabel(self, label)
+     |  
+     |  setNumber(self)
+     |  
+     |  setProperty(self, name, value)
+     |  
+     |  setString(self)
+     |  
+     |  setType(self, type)
+     |  
+     |  setView(self, view)
+     |  
+     |  setViewLabel(self, viewLabel)
+     |  
+     |  unHide(self)
+     |  
+     |  unSetProperty(self, name)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Field:
+     |  
+     |  db_column
+     |  
+     |  identifier
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  view
+    
+    class Properties(builtins.object)
+     |  Methods defined here:
+     |  
+     |  __init__(self, schema)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  addProperty(self, name, value)
+     |  
+     |  delProperty(self, identifier)
+     |  
+     |  getProperties(self)
+     |  
+     |  getProperty(self, identifier)
+     |  
+     |  isMember(self, property)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  schema
+    
+    class Property(builtins.object)
+     |  A basic property / key value pair. 
+     |  If the value is a dict it will recusively instantiate properties within itself
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, name, value)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  name
+     |  
+     |  value
+    
+    class View(lookMLObject)
+     |  Method resolution order:
+     |      View
+     |      lookMLObject
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  __str__(self)
+     |      Return str(self).
+     |  
+     |  addCount(self)
+     |      Add a count measure to the view, returns self
+     |  
+     |  addCountDistinct(self, f)
+     |      Add a count distinct to the view based on a field object or field name/identifier. returns self
+     |  
+     |  addDimension(self, dbColumn, type='string')
+     |      dbColumn is a string representing the column name
+     |  
+     |  addField(self, field)
+     |      Takes a field object as an argument and adds it to the view, if the field is a dimension and primary key it will be set as the view primary key
+     |  
+     |  addFields(self, fields)
+     |      An iterable collection of field objects will be passed to the add field function. Helpful for adding many fields at once
+     |  
+     |  createViewFromQuery(self, query)
+     |      pass a string query, will run against DB and generate fields based on result set. Returns self
+     |  
+     |  createViewFromTable(self, sql_table_name)
+     |      pass a table name to the view, use the information to retrieve table metadata and create the view representation
+     |  
+     |  getDimensions(self)
+     |      returns iterable of Dimension Fields
+     |  
+     |  getField(self, identifier)
+     |      Returns a specific field based on identifier/string lookup
+     |  
+     |  getFieldByDBColumn(self, dbColumn)
+     |      Converts the db column to lookCase for identifier lookup.....
+     |  
+     |  getFieldNames(self)
+     |      Returns field names/identifiers as a generator yielding strings
+     |  
+     |  getFields(self)
+     |      Returns all the fields as a generator
+     |  
+     |  getFieldsSorted(self)
+     |      returns all the fields sorted first by alpabetical dimensions/filters, then alphabetical measures
+     |  
+     |  getFilters(self)
+     |      returns iterable of Filter Fields
+     |  
+     |  getMeasures(self)
+     |      returns iterable of Measure Fields
+     |  
+     |  getParameters(self)
+     |      returns iterable of Paramter Fields
+     |  
+     |  getPrimaryKey(self)
+     |      returns the primary key
+     |  
+     |  metaDataMapper(self, cursor)
+     |      Pass a pyodbc cursor object and it will use return values to determine the field types and add each field to the view
+     |  
+     |  setLabel(self, label)
+     |      Sets the view label
+     |  
+     |  setMessage(self, message)
+     |      Sets a Commented Message above the view
+     |  
+     |  setPrimaryKey(self, f)
+     |      A string identifier or a field object can be passed, and will be set as the new primary key of the view
+     |  
+     |  setSqlTableName(self, sql_table_name)
+     |  
+     |  unSetPrimaryKey(self)
+     |      Unsets the view primary key returns self
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  derived_table
+     |  
+     |  fields
+     |  
+     |  message
+     |  
+     |  primaryKey
+     |  
+     |  properties
+     |  
+     |  schema
+     |  
+     |  sql_table_name
+     |  
+     |  tableSource
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from lookMLObject:
+     |  
+     |  setIdentifier(self, identifier)
+     |  
+     |  setName(self, name)
+     |  
+     |  setOutFilePath(self, outFilePath)
+     |  
+     |  writeFile(self, overWriteExisting=True)
+     |      Checks to see if the file exists before writing
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from lookMLObject:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class lookMLObject(builtins.object)
+     |  Methods defined here:
+     |  
+     |  __init__(self, *args, **kwargs)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  setIdentifier(self, identifier)
+     |  
+     |  setName(self, name)
+     |  
+     |  setOutFilePath(self, outFilePath)
+     |  
+     |  writeFile(self, overWriteExisting=True)
+     |      Checks to see if the file exists before writing
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class viewFactory(builtins.object)
+     |  Does one information Schema Lookup based on a passed table pattern, returns generator of Views. DB connection must be working
+     |  
+     |  Methods defined here:
+     |  
+     |  __init__(self, tablePattern=None, catalog=None, schema=None, column=None)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |  
+     |  createView(self, table=None, schema=None)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+
+DATA
+    DB = <lib.db.sqlServer object>
+
+FILE
+    /Users/Russell/pythonProjects/lookmlautomation/lib/lookML.py
+
+

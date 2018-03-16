@@ -1,0 +1,31 @@
+Dependencies:
+
+	All Envirs:
+		python 3.6+ (plan to eventually make it compatiable with 2.x)
+		pip install jinja2
+		pip install pyodbc
+		
+	Windows:
+		windows will use the native {SQL Server} driver 
+	
+	Unix-Like:
+		need to install odbc drivers for sql server using the instructions here: 
+			
+	Database:
+		I haven't tested it with 'Windows Authentication mode', so I would work under the assumption you need a sql server auth enabled login
+		This has been tested on MSSQL 2016 Express edition, the sql server odbc driver should have broad compatibility
+
+		Installing the drivers: https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server
+
+		Postgres:
+		https://odbc.postgresql.org/docs/unix-compilation.html
+		https://www.postgresql.org/ftp/odbc/versions/src/
+
+
+
+Configure settings/settings.ini
+	
+	database password and host information is contained there....
+		
+Running:
+	python run.py 

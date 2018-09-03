@@ -21,6 +21,16 @@ Dependencies:
 		https://odbc.postgresql.org/docs/unix-compilation.html
 		https://www.postgresql.org/ftp/odbc/versions/src/
 
+		MySQL:
+
+
+unixodbc...
+odbcinst -j
+/etc/odbcinst.ini
+[MySQL ODBC 3.51 Driver]
+Driver=/home/gord/Downloads/mysql-connector-odbc-3.51.30-linux-glibc2.3-x86-64bit/lib/libmyodbc3.so
+UsageCount=1
+
 
 
 Configure settings/settings.ini

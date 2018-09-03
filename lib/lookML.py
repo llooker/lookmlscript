@@ -17,39 +17,45 @@ except:
         literalDelimeterEnd = '`'
     DB = db()
 
-"""
-Author:			Russell Garner
-Created Date:	2017
-Description:	This module is for create lookml scripts.
-
-Changes:
-Author			Date 			Description
-------------------------------------------------------
-BoRam Hong		2018.01.11		Adding int and bool data type to View metaDataMapper method
-								Change snakeCase method to lookCase method to remove spaces on view name.
-"""
-
 class lookMLObject:
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.get('extension', '.lkml')
         self.outFilePath = kwargs.get('outFilePath', 'lookMLObject.lkml')
         self.contextVariables = kwargs.get('contextVariables', {})
-        self.identifier = kwargs.get('identifier', 'identifier_not_set')
+        
         #self.outFileFolder = kwargs.get('outPath', 'output')
+        #set the name first from an explicit named argument of either identifier or name, 
+        # otherwise check for the first positional argument, if it is a string use it otherwise empty string
+        self.fileName = ''
+        self.identifier = kwargs.get('identifier', None)
+        if not self.identifier:
+            self.identifier = kwargs.get('name', None)
+        if not self.identifier:
+            if len(args) > 1:
+                if isinstance(args[1],str):
+                    self.identifier = args[1]
+            else:
+                self.identifier = ''
 
-    def setOutFilePath(self, outFilePath):
+    def setOutFilePath(self, outFilePath, objectNameAsFileName=True):
         ''''''
-        self.outFilePath = outFilePath
+        if objectNameAsFileName:
+            if isinstance(self,View):
+                self.fileName = self.identifier + '.view.lkml'
+                self.outFilePath = '/'.join([outFilePath,self.identifier + '.view.lkml'])
+            elif isinstance(self, Model):
+                self.fileName = self.identifier + '.model.lkml'
+                self.outFilePath = '/'.join([outFilePath,self.fileName])
+            else:
+                self.fileName = self.identifier + '.lkml'
+                self.outFilePath = '/'.join([outFilePath,self.fileName])
+        else:
+            self.outFilePath = outFilePath
         return self
 
-    def setIdentifier(self, identifier):
+    def setName(self, identifier):
         ''''''
         self.identifier = identifier
-        return self
-
-    def setName(self, name):
-        ''''''
-        self.setIdentifier(name)
         return self
 
     def writeFile(self,overWriteExisting=True):
@@ -93,9 +99,9 @@ class View(lookMLObject):
                         '\n}\n',
                         *[str(child) for child in self.children.values()] if self.children else ''
                         )
-    
+
     def __repr__(self):
-        return "%s (%r) fields: %s" % (self.__class__, self.identifier, len(self))
+        return "%s (%r) fields: %s" % (self.__class__, self.identifier, len(self)) 
 
     def __len__(self):
         return len([f for f in self.getFields()])
@@ -150,7 +156,7 @@ class View(lookMLObject):
         elif key == 'ref':
             return f.splice('${',self.identifier,'}')
         else:
-            pass
+            return self.__getitem__(key)
 
     def __setattr__(self, name, value):
         if name == 'label':
@@ -266,6 +272,7 @@ class View(lookMLObject):
                 self.primaryKey = tmpField.identifier
                 if not callFromChild:
                     tmpField.setPrimaryKey()
+                    # tmpField.setPrimaryKey()
         return self
 
     def getPrimaryKey(self):
@@ -367,19 +374,40 @@ class View(lookMLObject):
         self.addField(measure)
         return self
 
-    def extend(self, name='', sameFile=True, required=False):
+    def addSum(self, f):
+        '''Add a count distinct to the view based on a field object or field name/identifier. returns self'''
+        if isinstance(f, Field):
+            field = f
+        else:
+            field = self.getField(f)
+        measure = Measure(
+            identifier=''.join(['total_', field.identifier]), schema={'sql': field.ref_short}
+        )
+        measure.setType('sum')
+        self.addField(measure)
+        return self
+
+    def extend(self, name='', sameFile=True, required=False, *args):
         ''' Creates an extended view, optionally within the same view file 
             name (string) -> name of the extended / child view. Will default to the parent + _extended
             sameFile (boolean) -> default true, if true will result in the child being printed within the parent's string call / file print
             required (boolean) -> default false, if true will result in the parent being set to extension required
             returns the child view object
         '''
+        
+        if not name:
+            if len(args) > 1:
+                if isinstance(args[0],str):
+                    child = View(args[0])
+                else:
+                    child = View('_'.join([self.identifier,'extended'])) 
+            else:
+                child = View('_'.join([self.identifier,'extended']))
+        else:
+            child = View(name)
+
         if required:
             self.setExtensionRequired()
-        child = View()
-        if not name:
-            name = '_'.join([self.identifier,'extended'])
-        child.setIdentifier(name)
         child.properties.addProperty('extends',self.identifier)
         child.parent = self
         if sameFile:
@@ -389,7 +417,7 @@ class View(lookMLObject):
 
 class Join:
     ''' Instantiates a LookML join object... '''
-    __slots__ = ['properties', 'identifier','from','to']
+    __slots__ = ['properties', 'identifier','_from','to']
 
     def __init__(self, *args, **kwargs):
         self.properties = Properties(kwargs.get('schema', {}))
@@ -404,12 +432,8 @@ class Join:
                          '\n}\n'
                           )
 
-    def setIdentifier(self, identifier):
+    def setName(self, identifier):
         self.identifier = identifier
-        return self
-
-    def setName(self, name):
-        self.setIdentifier(name)
         return self
 
     def setOn(self,sql_on):
@@ -426,13 +450,26 @@ class Explore:
     ''' Represents an explore object in LookML'''
     def __init__(self, *args, **kwargs):
         self.properties = Properties(kwargs.get('schema', {}))
-        self.identifier = kwargs.get('identifier', kwargs.get('view', 'error_view_not_set'))
+        # self.identifier = kwargs.get('identifier', kwargs.get('view', 'error_view_not_set'))
         self.joins = dict()
         self.base_view = kwargs.get('view',None)
 
+        self.identifier = kwargs.get('identifier', None)
+        if not self.identifier:
+            self.identifier = kwargs.get('name', None)
+        if not self.identifier:
+            if len(args) >= 1:
+                if isinstance(args[0],str):
+                    self.setName(args[0])
+                elif isinstance(args[0],View):
+                    self.setName(args[0].name)
+
+
+        self.view = kwargs.get('view', '')
+
     def __str__(self):
         return f.splice(
-                    '\nexplore:', self.identifier, ' {\n    ', 
+                    '\nexplore: ', self.identifier, ' {\n    ', 
                     '\n    '.join([str(p) for p in self.properties.getProperties()]), 
                     '\n    '.join([str(join) for join in self.getJoins()]),
                      '\n}\n'
@@ -443,6 +480,10 @@ class Explore:
             pass 
         elif isinstance(other,Join):
             pass
+        return self
+
+    def setName(self,name):
+        self.identifier = name
         return self
 
     def setViewName(self,view):
@@ -459,6 +500,7 @@ class Explore:
         return self.joins.get(key, {})
 
 
+
 class Model(lookMLObject):
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(self, *args, **kwargs)
@@ -471,6 +513,16 @@ class Model(lookMLObject):
                         '\n'.join([str(p) for p in self.properties.getProperties()]), 
                         '\n' * 5, '\n'.join([str(e) for e in self.getExplores()])
                         )
+    def setConnection(self,value):
+        self.properties.addProperty('connection',value)
+        return self
+
+    def include(self,file):
+        if isinstance(file,lookMLObject):
+            self.properties.addProperty('include',file.fileName)
+        else:
+            self.properties.addProperty('include',file) 
+        return self 
 
     def addExplore(self, explore):
         self.explores.update({explore.identifier: explore})
@@ -490,9 +542,21 @@ class Field:
         self.schema = kwargs.get('schema', {})
         self.properties = Properties(self.schema)
         self.db_column = kwargs.get('dbColumn', '')
-        self.identifier = kwargs.get('identifier', f.lookCase(self.db_column))  # optionally override the automatic snake case identifier
-        self.view = kwargs.get('view', '')
 
+        self.identifier = kwargs.get('identifier', None)
+        if not self.identifier:
+            self.identifier = kwargs.get('name', None)
+        if not self.identifier:
+            if len(args) > 1:
+                if isinstance(args[1],str):
+                    self.setName(args[1])
+            elif self.db_column:
+                self.identifier = f.lookCase(self.db_column)
+            else:
+                self.identifier = ''
+
+        self.view = kwargs.get('view', '')
+        
     def __str__(self):
         return f.splice(
                         self.identifier, ' {\n    ', 
@@ -528,13 +592,9 @@ class Field:
         self.view = view
         return self  # satisfies a need to linkback (look where setView is called)
 
-    def setIdentifier(self,identifier):
+    def setName(self,identifier):
         self.identifier = identifier
         return self
-
-    def setName(self,name):
-        ''''''
-        return self.setIdentifier(name)
 
     def setDBColumn(self, dbColumn, changeIdentifier=True):
         ''''''
@@ -588,13 +648,6 @@ class Field:
         self.properties.delProperty('hidden')
         return self
 
-    # def ref(self):
-    #     ''''''
-    #     # return a reference to the field
-    #     if self.view:
-    #         return f.splice('${' , self.view , '.' , self.identifier , '}')
-    #     else:
-    #         return f.splice('${' , self.identifier , '}')
 
 
 class Property:
@@ -757,33 +810,43 @@ class viewFactory:
     
     def createView(self,table=None,schema=None):
             tmpView = View()
+            tmpView.setName(f.lookCase(table))
             if table in self.colMap.keys():
                 schem = self.colMap[table][0]['schema']
-                tmpView.setSqlTableName(
-                                f.splice(
-                                    DB.literalDelimeterStart,
-                                    schem,
-                                    DB.literalDelimeterEnd,
-                                    '.',
-                                    DB.literalDelimeterStart,
-                                    table,
-                                    DB.literalDelimeterEnd
+                if schema:
+                    tmpView.setSqlTableName(
+                                    f.splice(
+                                        DB.literalDelimeterStart,
+                                        schema,
+                                        DB.literalDelimeterEnd,
+                                        '.',
+                                        DB.literalDelimeterStart,
+                                        table,
+                                        DB.literalDelimeterEnd
+                                        )
                                     )
-                                )
+                else:
+                    tmpView.setSqlTableName(
+                    f.splice(
+                        DB.literalDelimeterStart,
+                        table,
+                        DB.literalDelimeterEnd
+                        )
+                    ) 
                 for field in self.colMap[table]:
-                    if 'int' in field['type']:
+                    if field['type'] in ['int','bigint','smallint','double'] :
                         dim = Dimension(dbColumn=field['col'])
                         dim.setNumber()
                         tmpView.addField(dim)
-                    elif 'varchar' in field['type']:
+                    elif field['type'] in ['char','varchar'] :
                         dim = Dimension(dbColumn=field['col'])
                         dim.setString()
                         tmpView.addField(dim)
-                    elif 'date' in field['type'] or 'time' in field['type']:
+                    elif field['type'] in ['date','timestamp','time'] :
                         dim = DimensionGroup(dbColumn=field['col'])
                         dim.setType('time')
                         tmpView.addField(dim)
-                    elif 'bit' in field['type']:
+                    elif field['type'] in ['bit']:
                         dim = Dimension(dbColumn=field['col'])
                         dim.setType('yesno')
                         tmpView.addField(dim)

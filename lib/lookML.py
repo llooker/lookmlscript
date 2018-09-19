@@ -22,13 +22,14 @@ Author:			Russell Garner
 Created Date:	2017
 Description:	This module is for create lookml scripts.
 
-Changes:
+Change
 Author			Date 			Description
 ------------------------------------------------------
 BoRam Hong		2018.01.11		Adding int and bool data type to View metaDataMapper method
 								Change snakeCase method to lookCase method to remove spaces on view name.
 """
 
+#Class that doesn't get instantiated on it's own, rather serves as an input to several other classes e.g. view, model 
 class lookMLObject:
     def __init__(self, *args, **kwargs):
         self.extension = kwargs.get('extension', '.lkml')
@@ -62,6 +63,7 @@ class lookMLObject:
         w.writeFile(overWriteExisting=overWriteExisting)
 
 
+## Schema = a dict that relates to the available options within a Lookml object, (e.g. check quickhelp in Looker IDE for available options or docs for more options)
 class View(lookMLObject):
     __slots__ = ['sql_table_name','derived_table','tableSource','message','fields','primaryKey','schema','properties','children','parent']
     def __init__(self, *args, **kwargs):
@@ -180,16 +182,20 @@ class View(lookMLObject):
         self.derived_table = None
         return self
 
+## Method adds a commented message at the top of a view
     def setMessage(self, message):
         '''Sets a Commented Message above the view'''
         self.message = ''.join(['#', message])
         return self
 
+## Method will take an inputted string and add that property to the schema dict of the view using the addProperty method.
     def setLabel(self, label):
         ''' Sets the view label property'''
         self.properties.addProperty('label',label)
         return self
 
+## Method returns true or false, if used will add extension required parameter
+## addProperty method, takes a dictionary as an input and adds to the 'schema'
     def setExtensionRequired(self):
         ''' Sets the view to be "extension: required" '''
         self.properties.addProperty('extension','required')
@@ -198,6 +204,7 @@ class View(lookMLObject):
     def getFields(self):
         '''Returns all the fields as a generator'''
         for field, literal in self.fields.items():
+            ## Does this yeild only return the first value of this loop?
             yield literal
 
     def getFieldsSorted(self):
@@ -471,6 +478,10 @@ class Model(lookMLObject):
                         '\n'.join([str(p) for p in self.properties.getProperties()]), 
                         '\n' * 5, '\n'.join([str(e) for e in self.getExplores()])
                         )
+
+    def setName(self, name):
+       self.setIdentifier(name)
+       return self
 
     def addExplore(self, explore):
         self.explores.update({explore.identifier: explore})

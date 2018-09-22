@@ -26,7 +26,7 @@ class lookerAPIClient:
         return response.json()
 
     def post(self, call='', json_payload=None):
-        response = requests.post(self.uri_full + call, headers=self.auth_headers, data=json_payload)
+        response = requests.post(self.uri_full + call, headers=self.auth_headers, json=json_payload)
         return response
 
     # def post(self, **kwargs):

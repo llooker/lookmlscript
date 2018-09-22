@@ -1,3 +1,6 @@
+
+import sys
+sys.path.append('../')
 import codecs
 import os
 import logging
@@ -5,7 +8,9 @@ import logging
 # config = ConfigParser.RawConfigParser(allow_no_value=True)
 # config.read('settings/settings.ini')
 import lib.functions as f
+
 import lib.writer as writer
+import lib.api as api
 try:
     import lib.db as db
     #Create a single db instance, accessed globally to save resources
@@ -767,6 +772,7 @@ class viewFactory:
                 self.colMap.update({row.table_name: [{'schema':row.table_schem , 'col' : row.column_name, 'type' : row.type_name}]}) 
     
     def createView(self,table=None,schema=None):
+
             tmpView = View()
             if table in self.colMap.keys():
                 schem = self.colMap[table][0]['schema']
@@ -802,3 +808,23 @@ class viewFactory:
             else:
                 logging.info(table + " Not Found Skipping view Creation....")
                 return None
+
+class viewFactory2:
+    '''
+        This is an alternative implementation which derives metadata from the looker API only
+        '''
+    def __init__(self):
+         pass
+
+
+    
+    def createView(self, tablePattern=None, catalog=None, schema=None, column=None):
+        tmp = View()
+        apiInstance = api.lookerAPIClient()
+        field_iteration = apiInstance.get_columns(schema=schema, table_name=tablePattern)
+        for field in field_iteration:
+            if 'NUMBER' in field['Data_Type']:
+                dim = Dimension(dbColumn=field['Column_Name'])
+                dim.setType('number')
+                tmp.addField(dim)
+        return tmp

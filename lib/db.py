@@ -3,7 +3,7 @@ import requests
 import pyodbc 
 import configparser as ConfigParser
 config = ConfigParser.RawConfigParser(allow_no_value=True)
-config.read('/Users/Looker/looker_stuff/msiinformatics/lookmlscript/settings/config.ini')
+config.read('settings/settings.ini')
 
 
 def db():
@@ -72,66 +72,6 @@ class database:
         # return self.cursor.columns(table='vwDimCompany')
         return self.cursor.columns(table=table, catalog=catalog, schema=schema, column=column)
 
-class lookerAPIClient:
-    def __init__(self, api_host=None, api_client_id=None, api_secret=None, api_port='19999'):
-        auth_request_payload = {'client_id': api_client_id, 'client_secret': api_secret}
-        self.host = api_host
-        self.uri_stub = '/api/3.0/'
-        self.uri_full = ''.join([api_host, ':', api_port, self.uri_stub])
-        response = requests.post(self.uri_full + 'login', params=auth_request_payload)
-        authData = response.json()
-        self.access_token = authData['access_token']
-        self.auth_headers = {
-                'Authorization' : 'token ' + self.access_token,
-                }
-
-    def get(self, call=''):
-        response = requests.get(self.uri_full + call, headers=self.auth_headers)
-        return response.json()
-
-    def post_test(self, connection, sql):
-        response = requests.post(self.uri_full + call, )
-
-    def post(self, connection, sql,  call=''):
-        payload = {'connection':connection, 'sql':sql}
-        response = requests.post(self.uri_full, data=payload, headers=self.auth_headers)
-        return response.json()
-
-    def getLooks(self):
-        return self.get('looks')
-
-    def runLook(self, look, limit=100):
-        optional_arguments = '?' + 'limit=' + str(limit)
-        return self.get('/'.join(['looks',look,'run','json'])+optional_arguments)
-
-    def getlookinfo(self, look):
-        return self.get('look')
-
-    def getdashboardinfo(self, dashboard_id):
-        return self.get('/'.join(['dashboards',dashboard_id]))
-
-    def createSQLQuery(self,slug):
-        return self.post('sql_queries', slug=slug)
-
-    def connection_name(self,fields):
-        return self.get(''.join(['/connections','?fields=',fields]))
-
-    def lookmlmodel_info(self,modelname):
-        return self.get('/'.join(['lookml_models',modelname]))
-
-#Initialize the Looker API Class with the data in our config file (which is stored in a neighboring file 'config')
-x = lookerAPIClient(
-        api_host      = config.get('api', 'api_host'), 
-        api_client_id = config.get('api', 'api_client_id'), 
-        api_secret    = config.get('api', 'api_secret'), 
-        api_port      = config.get('api', 'api_port')
-        ) 
-
-# print(x)
-
-look_params = {'connection':'snowflake_test', 'sql':'select * from fruit_basket'}
-
-print(x.post('sql_queries', 'snowflake','select test'))
 
 # # class sqlServer(database):
 #     ''' specific implementation for SqlServer '''

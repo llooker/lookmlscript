@@ -1,4 +1,5 @@
 import logging
+import requests
 import pyodbc 
 import configparser as ConfigParser
 config = ConfigParser.RawConfigParser(allow_no_value=True)
@@ -77,6 +78,7 @@ class database:
         # return self.cursor.columns(table='vwDimCompany')
         return self.cursor.columns(table=table, catalog=catalog, schema=schema, column=column)
 
+<<<<<<< HEAD
 class mySQL(database):
     def __init__(self, *args, **kwargs):
         super(mySQL, self).__init__(self, *args, **kwargs)
@@ -95,19 +97,21 @@ class mySQL(database):
                     )
 #Login Prompt=False;
 #User ID=root;Password=root;Data Source=localhost;Database=test;CHARSET=UTF8
+=======
 
-class sqlServer(database):
-    ''' specific implementation for SqlServer '''
-    def __init__(self, *args, **kwargs):
-        super(sqlServer, self).__init__(self, *args, **kwargs)
-        self.literalDelimeterStart = '['
-        self.literalDelimeterEnd = ']' 
+# # class sqlServer(database):
+#     ''' specific implementation for SqlServer '''
+#     def __init__(self, *args, **kwargs):
+#         super(sqlServer, self).__init__(self, *args, **kwargs)
+#         self.literalDelimeterStart = '['
+#         self.literalDelimeterEnd = ']' 
+>>>>>>> 8697f818a6dd507c1d799c4053da11db0e305550
 
-    def getTableMetaData(self, table):
-        return self.getCursorMetaData('SELECT TOP (10) * FROM ' + table + ' WHERE 1=1')
+#     def getTableMetaData(self, table):
+#         return self.getCursorMetaData('SELECT TOP (10) * FROM ' + table + ' WHERE 1=1')
 
-    def informationSchema(self, tablePattern):
-        return self.getData(f"select * from INFORMATION_SCHEMA.COLUMNS c where c.TABLE_NAME like '{tablePattern}'")
+#     def informationSchema(self, tablePattern):
+#         return self.getData(f"select * from INFORMATION_SCHEMA.COLUMNS c where c.TABLE_NAME like '{tablePattern}'")
 
 
 class postgres(database):

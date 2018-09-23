@@ -666,18 +666,26 @@ class Property:
     def __str__(self):
         if self.name.startswith('sql') or self.name == 'html':
             return f.splice(self.name, ': ', str(self.value), ' ;;')
-        elif self.name in ['include', 'connection', 'description']:
+        elif self.name in ['include', 'connection', 'description','value']:
             return f.splice(self.name, ': "', str(self.value), '"')
         elif self.name.endswith('url') or self.name.endswith('label') or self.name.endswith('format') or self.name.endswith('persist_for'):
             return f.splice(self.name, ': "', str(self.value), '"')
         elif self.name == 'extends':
             return f.splice(self.name, ': [', str(self.value), ']')
+        elif self.name.startswith('filters'):
+            return f.splice(f.stripID(self.name),str(self.value))
         else:
             return f.splice(self.name , ': ' , str(self.value))
 
 
 class Properties:
-    ''''''
+    '''
+    Treats the collection of properties as a recursive dicitionary
+    Things that fall outside of uniqueness (special cases):
+    includes, links, filters, bind_filters
+    Things that should be their own class:
+    data_groups, named_value_format, sets
+    '''
     __slots__ = ['schema']
 
     def __init__(self, schema):
@@ -699,7 +707,20 @@ class Properties:
             yield Property(k, v)
 
     def addProperty(self, name, value):
-        self.schema.update({name: value})
+        if name == 'includes':
+            n = len([x for x in filter(lambda x: x.startswith('includes'), self.schema.keys())])
+            self.schema.update({name +'_'+str(n) : value})
+        elif name == 'links': 
+            n = len([x for x in filter(lambda x: x.startswith('links'), self.schema.keys())])
+            self.schema.update({name +'_'+str(n) : value})            
+        elif name == 'filters':
+            n = len([x for x in filter(lambda x: x.startswith('filters'), self.schema.keys())])
+            self.schema.update({name +'_'+str(n) : value})            
+        elif name == 'bind_filters':
+            n = len([x for x in filter(lambda x: x.startswith('bind_filters'), self.schema.keys())])
+            self.schema.update({name +'_'+str(n) : value})
+        else:
+            self.schema.update({name: value})
 
     def delProperty(self, identifier):
         self.schema.pop(identifier, None)
@@ -713,7 +734,6 @@ class Dimension(Field):
         ### SUPER CALL ####
         super(Dimension, self).__init__(self, *args, **kwargs)
         if not self.properties.isMember('sql'):
-            #TODO put the sql server specific [] somewhere with separation of concerns, ie DB class
             self.properties.addProperty('sql', f.splice('${TABLE}.' , DB.literalDelimeterStart , self.db_column , DB.literalDelimeterEnd))
 
     def isPrimaryKey(self):

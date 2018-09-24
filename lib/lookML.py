@@ -1,50 +1,24 @@
+import re
+NONUNIQUE_PROPERTIES = {'include','link', 'filters', 'bind_filters', 'data_groups', 'named_value_format', 'sets'}
+DB_FIELD_DELIMITER_START = '`' 
+DB_FIELD_DELIMITER_END = '`'
+OUTPUT_DIR = ''
 
-import sys
-# sys.path.append('../')
-import codecs
-import os
-import logging
-# import configparser as ConfigParser
-# config = ConfigParser.RawConfigParser(allow_no_value=True)
-# config.read('settings/settings.ini')
-import lib.functions as f
+def snakeCase(string):
+    str1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', str1).lower()
 
-import lib.writer as writer
-import lib.api as api
-try:
-    import lib.db as db
-    #Create a single db instance, accessed globally to save resources
-    DB = db.db()
-except:
-    logging.info('Failed to import or connect to the DB, operating in offline mode')
-    class db:
-        literalDelimeterStart = '`'
-        literalDelimeterEnd = '`'
-    DB = db()
+def splice(*args):
+    return ''.join([*args])
 
-"""
-Author:			Russell Garner
-Created Date:	2017
-Description:	This module is for create lookml scripts.
+def removeSpace(string):  # removing special character / [|]<>,.?}{+=~!$%^&*()-
+    return re.sub('(\s|/|\[|\]|\||\,|<|>|\.|\?|\{|\}|#|=|~|!|\+|\$|\%|\^|\&|\*|\(|\)|\-|\:)+', r'', string)
 
-Change
-Author			Date 			Description
-------------------------------------------------------
-BoRam Hong		2018.01.11		Adding int and bool data type to View metaDataMapper method
-								Change snakeCase method to lookCase method to remove spaces on view name.
-"""
+def lookCase(string):
+    return removeSpace(snakeCase(string))
 
-#Class that doesn't get instantiated on it's own, rather serves as an input to several other classes e.g. view, model 
-class lookMLObject:
+class writeable:
     def __init__(self, *args, **kwargs):
-        self.extension = kwargs.get('extension', '.lkml')
-        self.outFilePath = kwargs.get('outFilePath', 'lookMLObject.lkml')
-        self.contextVariables = kwargs.get('contextVariables', {})
-        
-        #self.outFileFolder = kwargs.get('outPath', 'output')
-        #set the name first from an explicit named argument of either identifier or name, 
-        # otherwise check for the first positional argument, if it is a string use it otherwise empty string
-        self.fileName = ''
         self.identifier = kwargs.get('identifier', None)
         if not self.identifier:
             self.identifier = kwargs.get('name', None)
@@ -53,44 +27,48 @@ class lookMLObject:
                 if isinstance(args[1],str):
                     self.identifier = args[1]
             else:
-                self.identifier = ''
+                self.identifier = ''        
+        self.extension = kwargs.get('extension', '.lkml')
+        self.fileName = self.identifier + self.extension     
+        self.outputFolder = kwargs.get('output_dir',OUTPUT_DIR)
+        # if self.outputFolder:
+        #     self.path = self.outputFolder  + self.fileName if self.outputFolder.endswith('/') else self.outputFolder  + '/' +  self.fileName
+        # else:
+        #     self.path = self.fileName
 
-    def setOutFilePath(self, outFilePath, objectNameAsFileName=True):
-        ''''''
-        if objectNameAsFileName:
-            if isinstance(self,View):
-                self.fileName = self.identifier + '.view.lkml'
-                self.outFilePath = '/'.join([outFilePath,self.identifier + '.view.lkml'])
-            elif isinstance(self, Model):
-                self.fileName = self.identifier + '.model.lkml'
-                self.outFilePath = '/'.join([outFilePath,self.fileName])
-            else:
-                self.fileName = self.identifier + '.lkml'
-                self.outFilePath = '/'.join([outFilePath,self.fileName])
-        else:
-            self.outFilePath = outFilePath
+        # super(writeable, self).__init__(self, *args, **kwargs)
+
+    def setFolder(self,folder):
+        self.outputFolder = folder
         return self
 
+
     def setName(self, identifier):
-        ''''''
+        ''' create a synonym with identifier'''
         self.identifier = identifier
         return self
 
-    def writeFile(self,overWriteExisting=True):
+    def write(self,overWriteExisting=True):
         ''' Checks to see if the file exists before writing'''
-        w = writer.stringTemplateProcessor(
-            string=self.__str__(),
-            contextVariables=self.contextVariables,
-            outFilePath=self.outFilePath
-        )
-        w.writeFile(overWriteExisting=overWriteExisting)
+        print(self.path)
+        if overWriteExisting:
+            with open(self.path, 'w') as opened_file:
+                try:
+                    opened_file.write(self.__str__())
+                except:
+                    pass
+        else:
+            try:
+                fh = open(self.path, 'r')
+                fh.close()
+            except FileNotFoundError:
+                with open(self.path, 'w') as opened_file:
+                    opened_file.write(self.__str__())
 
-
-## Schema = a dict that relates to the available options within a Lookml object, (e.g. check quickhelp in Looker IDE for available options or docs for more options)
-class View(lookMLObject):
-    __slots__ = ['sql_table_name','derived_table','tableSource','message','fields','primaryKey','schema','properties','children','parent']
+class View(writeable):
+    __slots__ = ['sql_table_name','derived_table','tableSource','message','fields','primaryKey','schema','properties','children','parent','fileName']
     def __init__(self, *args, **kwargs):
-        ### fileProperties ###
+        super(View, self).__init__(self, *args, **kwargs)
         if 'sql_table_name' in kwargs.keys():
             self.sql_table_name = Property('sql_table_name', kwargs.get('sql_table_name', 'view'))
             self.tableSource = True
@@ -106,11 +84,16 @@ class View(lookMLObject):
         self.properties = Properties(self.schema)
         self.children = {}
         self.parent = None
-        super(View, self).__init__(self, *args, **kwargs)
+        self.fileName = self.identifier + '.view.lkml'
+        if self.outputFolder:
+            self.path = self.outputFolder  + self.fileName if self.outputFolder.endswith('/') else self.outputFolder  + '/' +  self.fileName
+        else:
+            self.path = self.fileName
+        
 
     def __str__(self):
-        return f.splice(
-                        f.splice('#',self.message,'\n') if self.message else '', 
+        return splice(
+                        splice('#',self.message,'\n') if self.message else '', 
                         'view: ', self.identifier, ' {', 
                         '\n',self.source(),'\n', 
                         '\n'.join([str(p) for p in self.properties.getProperties()]), 
@@ -168,12 +151,19 @@ class View(lookMLObject):
         return self.getField(identifier)
 
     def __getattr__(self, key):
-        if key == 'name':
+        # print(self.__dict__.keys())
+        if key in self.__dict__.keys():
+            return self.__dict__[key]
+        # elif key in super.__dict__.keys():
+        #     return super.__dict__[key]
+        elif key == 'name':
             return self.identifier
         elif key == 'pk':
             return self.getPrimaryKey()
         elif key == 'ref':
-            return f.splice('${',self.identifier,'}')
+            return splice('${',self.identifier,'}')
+        # elif key == 'path':
+        #     return self.path
         else:
             return self.__getitem__(key)
 
@@ -198,27 +188,32 @@ class View(lookMLObject):
         else:
             return str(self.sql_table_name)
 
-    def setSqlTableName(self,sql_table_name):
+    def setSqlTableName(self,sql_table_name='',schema=''):
         ''' Set the sql table name, returns self'''
-        self.sql_table_name = Property('sql_table_name',sql_table_name)
+        if schema:
+            tmp = splice(
+                    DB_FIELD_DELIMITER_START, schema , DB_FIELD_DELIMITER_END,'.', 
+                    DB_FIELD_DELIMITER_START, sql_table_name ,DB_FIELD_DELIMITER_END
+                    )
+        else:
+            tmp = splice(
+                    DB_FIELD_DELIMITER_START, sql_table_name ,DB_FIELD_DELIMITER_END
+                    )
+        self.sql_table_name = Property('sql_table_name',tmp)
         self.tableSource = True
         self.derived_table = None
         return self
 
-## Method adds a commented message at the top of a view
     def setMessage(self, message):
         '''Sets a Commented Message above the view'''
         self.message = ''.join(['#', message])
         return self
 
-## Method will take an inputted string and add that property to the schema dict of the view using the addProperty method.
     def setLabel(self, label):
         ''' Sets the view label property'''
         self.properties.addProperty('label',label)
         return self
 
-## Method returns true or false, if used will add extension required parameter
-## addProperty method, takes a dictionary as an input and adds to the 'schema'
     def setExtensionRequired(self):
         ''' Sets the view to be "extension: required" '''
         self.properties.addProperty('extension','required')
@@ -247,7 +242,7 @@ class View(lookMLObject):
         ''' Converts the db column to lookCase for identifier lookup.....'''
         #TODO: re-implement this to actually use the DB column as a key (keep in mind that doesn't need to be unique...)
         #TODO: Raise a not found exception here instead of silently failing with a notfound key
-        return self.fields.get(f.lookCase(dbColumn), Field(identifier='Not Found'))
+        return self.fields.get(lookCase(dbColumn), Field(identifier='Not Found'))
 
     def addField(self, field):
         '''Takes a field object as an argument and adds it to the view, if the field is a dimension and primary key it will be set as the view primary key'''
@@ -332,44 +327,6 @@ class View(lookMLObject):
         '''returns iterable of Paramter Fields'''
         return filter(lambda par: isinstance(par, Parameter), self.fields.values())
 
-    def metaDataMapper(self, cursor):
-        '''Pass a pyodbc cursor object and it will use return values to determine the field types and add each field to the view'''
-        for col in cursor:
-            if str(col[1]) == "<class 'str'>":
-                dim = Dimension(dbColumn=col[0])
-                dim.setType('string')
-                self.addField(dim)
-            elif str(col[1]) == "<class 'decimal.Decimal'>":
-                dim = Dimension(dbColumn=col[0])
-                dim.setType('number')
-                self.addField(dim)
-            elif str(col[1]) == "<class 'datetime.datetime'>":
-                dim = DimensionGroup(dbColumn=col[0])
-                dim.setType('time')
-                self.addField(dim)
-            elif str(col[1]) == "<class 'int'>":
-                dim = Dimension(dbColumn=col[0])
-                dim.setType('string')  # We used string for int in our POC
-                self.addField(dim)
-            elif str(col[1]) == "<class 'bool'>":
-                dim = Dimension(dbColumn=col[0])
-                dim.setType('string')  # We used string for bool in our POC
-                self.addField(dim)
-
-    def createViewFromTable(self, sql_table_name):
-        ''' pass a table name to the view, use the information to retrieve table metadata and create the view representation '''
-        self.tableSource = True
-        self.sql_table_name = Property('sql_table_name', sql_table_name)
-        self.metaDataMapper(DB.getTableMetaData(sql_table_name))
-        return self
-
-    def createViewFromQuery(self, query):
-        '''pass a string query, will run against DB and generate fields based on result set. Returns self'''
-        self.tableSource = False
-        self.derived_table = Property('derived_table', {'sql': query})
-        self.metaDataMapper(DB.getCursorMetaData(query))
-        return self
-
     def addDimension(self,dbColumn, type='string'):
         ''' dbColumn is a string representing the column name'''
         dim = Dimension(dbColumn=dbColumn)
@@ -411,6 +368,42 @@ class View(lookMLObject):
         self.addField(measure)
         return self
 
+    def addComparisonPeriod(self,field_to_measure,date, measure_type='count_distinct'):
+        self.addFields(
+                [
+                    Filter().setName('reporting_period').setProperty('type','date')
+                   ,Filter().setName('comparison_period').setProperty('type','date')
+                   ,Measure().setName('reporting_period_measure')
+                   ,Measure().setName('comparison_period_measure')
+                   ]
+                )
+        assert isinstance(field_to_measure,Dimension)
+        self.reporting_period_measure.setType(measure_type)
+        self.comparison_period_measure.setType(measure_type)
+        self.comparison_period.setProperty('sql',
+        '''
+            {0}>= {{% date_start comparison_period  %}}
+            AND {0} <= {{% date_end reporting_period %}}
+        '''.format('${'+date.identifier+'_raw}')
+        )
+        self.reporting_period_measure.setProperty(
+                'sql'
+                ,'''CASE 
+                     WHEN {{% condition reporting_period %}} {0} {{% endcondition %}} THEN {1}
+                     ELSE NULL
+                    END
+                    '''.format('${'+date.identifier+'_raw}',field_to_measure.ref_short)
+                )
+        self.comparison_period_measure.setProperty('sql',
+        '''
+          CASE 
+           WHEN {{% condition comparison_period %}} {0} {{% endcondition %}} THEN {1}
+           ELSE NULL
+          END
+        '''.format('${'+date.identifier+'_raw}',field_to_measure.ref_short)
+        )
+        return self
+
     def extend(self, name='', sameFile=True, required=False, *args):
         ''' Creates an extended view, optionally within the same view file 
             name (string) -> name of the extended / child view. Will default to the parent + _extended
@@ -438,7 +431,6 @@ class View(lookMLObject):
             self.children.update({child.identifier: child})
         return child
 
-
 class Join:
     ''' Instantiates a LookML join object... '''
     __slots__ = ['properties', 'identifier','_from','to']
@@ -450,7 +442,7 @@ class Join:
         self.to = kwargs.get('to', None)
 
     def __str__(self):
-        return f.splice(
+        return splice(
                          '\njoin: ', self.identifier, ' {\n    ',
                          '\n    '.join([str(p) for p in self.properties.getProperties()]),
                          '\n}\n'
@@ -468,7 +460,6 @@ class Join:
         assert joinType in ['left_outer','full_outer','inner','cross']
         self.properties.addProperty('type',joinType)
         return self
-
 
 class Explore:
     ''' Represents an explore object in LookML'''
@@ -492,7 +483,7 @@ class Explore:
         self.view = kwargs.get('view', '')
 
     def __str__(self):
-        return f.splice(
+        return splice(
                     '\nexplore: ', self.identifier, ' {\n    ', 
                     '\n    '.join([str(p) for p in self.properties.getProperties()]), 
                     '\n    '.join([str(join) for join in self.getJoins()]),
@@ -523,17 +514,21 @@ class Explore:
     def getJoin(self, key):
         return self.joins.get(key, {})
 
-
-
-class Model(lookMLObject):
+class Model(writeable):
     def __init__(self, *args, **kwargs):
         super(Model, self).__init__(self, *args, **kwargs)
         self.schema = kwargs.get('schema', {})
         self.properties = Properties(self.schema)
         self.explores = {}
+        self.fileName = self.identifier + '.model.lkml'
+        if self.outputFolder:
+            self.path = self.outputFolder  + self.fileName if self.outputFolder.endswith('/') else self.outputFolder  + '/' +  self.fileName
+        else:
+            self.path = self.fileName       
+        
 
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\n'.join([str(p) for p in self.properties.getProperties()]), 
                         '\n' * 5, '\n'.join([str(e) for e in self.getExplores()])
                         )
@@ -542,7 +537,7 @@ class Model(lookMLObject):
         return self
 
     def include(self,file):
-        if isinstance(file,lookMLObject):
+        if isinstance(file,writeable):
             self.properties.addProperty('include',file.fileName)
         else:
             self.properties.addProperty('include',file) 
@@ -562,6 +557,82 @@ class Model(lookMLObject):
     def getExplore(self, key):
         return self.explores.pop(key, {})
 
+class Property:
+    ''' A basic property / key value pair. 
+    If the value is a dict it will recusively instantiate properties within itself '''
+    __slots__ = ['name', 'value']
+    def __init__(self, name, value):
+        self.name = name
+        if isinstance(value, str):
+            self.value = value
+        elif isinstance(value, dict):
+            self.value = Properties(value)
+        elif isinstance(value, list):
+            self.value = [Property(name, i) for i in value]
+        else:
+            raise Exception('not a dict, list or string')
+
+    def __str__(self):
+        if self.name.startswith('sql') or self.name == 'html':
+            return splice(self.name, ': ', str(self.value), ' ;;')
+        elif self.name in ['include', 'connection', 'description','value']:
+            return splice(self.name, ': "', str(self.value), '"')
+        elif self.name.endswith('url') or self.name.endswith('label') or self.name.endswith('format') or self.name.endswith('persist_for'):
+            return splice(self.name, ': "', str(self.value), '"')
+        elif self.name == 'extends':
+            return splice(self.name, ': [', str(self.value), ']')
+        elif self.name.startswith('filters'):
+            return splice(self.name,str(self.value))
+        else:
+            return splice(self.name , ': ' , str(self.value))
+
+class Properties:
+    '''
+    Treats the collection of properties as a recursive dicitionary
+    Things that fall outside of uniqueness (special cases):
+    includes, links, filters, bind_filters
+    Things that should be their own class:
+    data_groups, named_value_format, sets
+    '''
+    __slots__ = ['schema']
+
+    def __init__(self, schema):
+        assert isinstance(schema, dict)
+        self.schema = schema
+
+    def __str__(self):
+        return splice(
+                        '{\n    ' , 
+                        '\n    '.join([str(p) for p in self.getProperties()]) ,
+                         '\n    }' 
+                         )
+
+    def getProperty(self, identifier):
+        return Property(identifier, self.schema.get(identifier, None))
+
+    def getProperties(self):
+        for k, v in self.schema.items():
+            if k in NONUNIQUE_PROPERTIES:
+                for n in v:
+                    yield Property(k, n)
+            else:
+                yield Property(k, v)
+
+    def addProperty(self, name, value):
+        if name in NONUNIQUE_PROPERTIES:
+            index = self.schema.get(name,[])
+            index.append(value)
+            self.schema.update(
+                {name: index}
+            )
+        else:
+            self.schema.update({name: value})
+
+    def delProperty(self, identifier):
+        self.schema.pop(identifier, None)
+
+    def isMember(self, property):
+        return property in self.schema.keys()
 
 class Field:
     ''' Base class for fields in LookML, only derived/child types should be instantiated '''
@@ -578,15 +649,16 @@ class Field:
             if len(args) > 1:
                 if isinstance(args[1],str):
                     self.setName(args[1])
+                    self.db_column = args[1]
             elif self.db_column:
-                self.identifier = f.lookCase(self.db_column)
+                self.identifier = lookCase(self.db_column)
             else:
                 self.identifier = ''
 
         self.view = kwargs.get('view', '')
         
     def __str__(self):
-        return f.splice(
+        return splice(
                         self.identifier, ' {\n    ', 
                             '\n    '.join([str(n) for n in self.properties.getProperties()]),
                             '\n}\n'
@@ -599,9 +671,9 @@ class Field:
             return self.getPrimaryKey()
         elif key == 'ref':
             if self.view:
-                return f.splice('${' , self.view.identifier , '.' , self.identifier , '}')
+                return splice('${' , self.view.identifier , '.' , self.identifier , '}')
         elif key == 'ref_short':
-            return f.splice('${' , self.identifier , '}')
+            return splice('${' , self.identifier , '}')
         else:
             pass
 
@@ -622,13 +694,6 @@ class Field:
 
     def setName(self,identifier):
         self.identifier = identifier
-        return self
-
-    def setDBColumn(self, dbColumn, changeIdentifier=True):
-        ''''''
-        self.db_column = dbColumn
-        if changeIdentifier:
-            self.identifier = f.lookCase(self.db_column)
         return self
 
     def setProperty(self, name, value):
@@ -676,99 +741,24 @@ class Field:
         self.properties.delProperty('hidden')
         return self
 
-
-
-class Property:
-    ''' A basic property / key value pair. 
-    If the value is a dict it will recusively instantiate properties within itself '''
-    __slots__ = ['name', 'value']
-    def __init__(self, name, value):
-        self.name = name
-        if isinstance(value, str):
-            self.value = value
-        elif isinstance(value, dict):
-            self.value = Properties(value)
-        else:
-            raise Exception('not a dict or string')
-
-    def __str__(self):
-        if self.name.startswith('sql') or self.name == 'html':
-            return f.splice(self.name, ': ', str(self.value), ' ;;')
-        elif self.name in ['include', 'connection', 'description','value']:
-            return f.splice(self.name, ': "', str(self.value), '"')
-        elif self.name.endswith('url') or self.name.endswith('label') or self.name.endswith('format') or self.name.endswith('persist_for'):
-            return f.splice(self.name, ': "', str(self.value), '"')
-        elif self.name == 'extends':
-            return f.splice(self.name, ': [', str(self.value), ']')
-        elif self.name.startswith('filters'):
-            return f.splice(f.stripID(self.name),str(self.value))
-        else:
-            return f.splice(self.name , ': ' , str(self.value))
-
-
-class Properties:
-    '''
-    Treats the collection of properties as a recursive dicitionary
-    Things that fall outside of uniqueness (special cases):
-    includes, links, filters, bind_filters
-    Things that should be their own class:
-    data_groups, named_value_format, sets
-    '''
-    __slots__ = ['schema']
-
-    def __init__(self, schema):
-        assert isinstance(schema, dict)
-        self.schema = schema
-
-    def __str__(self):
-        return f.splice(
-                        '{\n' , 
-                        '\n    '.join([str(p) for p in self.getProperties()]) ,
-                         '\n}' 
-                         )
-
-    def getProperty(self, identifier):
-        return Property(identifier, self.schema.get(identifier, None))
-
-    def getProperties(self):
-        for k, v in self.schema.items():
-            yield Property(k, v)
-
-    def addProperty(self, name, value):
-        if name == 'includes':
-            n = len([x for x in filter(lambda x: x.startswith('includes'), self.schema.keys())])
-            self.schema.update({name +'_'+str(n) : value})
-        elif name == 'links': 
-            n = len([x for x in filter(lambda x: x.startswith('links'), self.schema.keys())])
-            self.schema.update({name +'_'+str(n) : value})            
-        elif name == 'filters':
-            n = len([x for x in filter(lambda x: x.startswith('filters'), self.schema.keys())])
-            self.schema.update({name +'_'+str(n) : value})            
-        elif name == 'bind_filters':
-            n = len([x for x in filter(lambda x: x.startswith('bind_filters'), self.schema.keys())])
-            self.schema.update({name +'_'+str(n) : value})
-        else:
-            self.schema.update({name: value})
-
-    def delProperty(self, identifier):
-        self.schema.pop(identifier, None)
-
-    def isMember(self, property):
-        return property in self.schema.keys()
-
-
 class Dimension(Field):
     def __init__(self, *args, **kwargs):
-        ### SUPER CALL ####
         super(Dimension, self).__init__(self, *args, **kwargs)
-        if not self.properties.isMember('sql'):
-            self.properties.addProperty('sql', f.splice('${TABLE}.' , DB.literalDelimeterStart , self.db_column , DB.literalDelimeterEnd))
+        self.setDBColumn(self.db_column,changeIdentifier=False)
 
     def isPrimaryKey(self):
         if self.properties.isMember('primary_key') and self.properties.getProperty('primary_key').value == 'yes':
             return True
         else:
             return False
+
+    def setDBColumn(self, dbColumn, changeIdentifier=True):
+        ''''''
+        self.db_column = dbColumn
+        self.setProperty('sql', splice('${TABLE}.' , DB_FIELD_DELIMITER_START , self.db_column , DB_FIELD_DELIMITER_END))
+        if changeIdentifier:
+            self.identifier =lookCase(self.db_column)
+        return self
 
     def setPrimaryKey(self):
         self.setProperty('primary_key', 'yes')
@@ -786,140 +776,70 @@ class Dimension(Field):
             self.setProperty('tiers', '[' + ','.join(tiers) + ']')
         return self.setType('tier')
 
+    def addLink(self,url,label,icon_url='https://looker.com/favicon.ico'):
+        self.properties.addProperty('link',{
+             'url'     :url
+            ,'label'   :label
+            ,'icon_url':icon_url
+        })
+        return self
+
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\ndimension: ', 
                         super(Dimension, self).__str__()
                         )
 
-
 class DimensionGroup(Field):
     def __init__(self, *args, **kwargs):
-        ### SUPER CALL ####
         super(DimensionGroup, self).__init__(self, *args, **kwargs)
         if not self.properties.isMember('timeframes'):
             self.properties.addProperty('timeframes', '[raw, year, quarter, month, week, date, day_of_week, hour, hour_of_day, minute, time, time_of_day]')
         if not self.properties.isMember('type'):
             self.properties.addProperty('type', 'time')
         if not self.properties.isMember('sql'):
-            self.properties.addProperty('sql', f.splice('${TABLE}.' , DB.literalDelimeterStart , self.db_column , DB.literalDelimeterEnd))
+            self.properties.addProperty('sql', splice('${TABLE}.' , DB_FIELD_DELIMITER_START , self.db_column , DB_FIELD_DELIMITER_END))
+
+    def setDBColumn(self, dbColumn, changeIdentifier=True):
+        ''''''
+        self.db_column = dbColumn
+        self.setProperty('sql', splice('${TABLE}.' , DB_FIELD_DELIMITER_START , self.db_column , DB_FIELD_DELIMITER_END))
+        if changeIdentifier:
+            self.identifier = lookCase(self.db_column)
+        return self
 
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\ndimension_group: ', 
                         super(DimensionGroup, self).__str__()
                         )
 
-
 class Measure(Field):
     def __init__(self, *args, **kwargs):
-        ### SUPER CALL ####
         super(Measure, self).__init__(self, *args, **kwargs)
 
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\nmeasure: ', 
                         super(Measure, self).__str__()
                         )
 
-
 class Filter(Field):
     def __init__(self, *args, **kwargs):
-        ### SUPER CALL ####
         super(Filter, self).__init__(self, *args, **kwargs)
 
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\nfilter: ', 
                         super(Filter, self).__str__()
                         )
 
-
 class Parameter(Field):
     def __init__(self, *args, **kwargs):
-        ### SUPER CALL ####
         super(Parameter, self).__init__(self, *args, **kwargs)
 
     def __str__(self):
-        return f.splice(
+        return splice(
                         '\nparameter: ', 
                         super(Parameter, self).__str__()
                         )
-
-class viewFactory:
-    ''' Does one information Schema Lookup based on a passed table pattern, returns generator of Views. DB connection must be working'''
-    def __init__(self, tablePattern=None, catalog=None, schema=None, column=None):
-        self.colMap = {}
-        for row in DB.getInformationSchemaMap(table=tablePattern, catalog=catalog, schema=schema, column=column):
-            if row.table_name in self.colMap.keys():
-                self.colMap[row.table_name].append({'schema':row.table_schem , 'col' : row.column_name, 'type' : row.type_name})
-            else:
-                self.colMap.update({row.table_name: [{'schema':row.table_schem , 'col' : row.column_name, 'type' : row.type_name}]}) 
-    
-    def createView(self,table=None,schema=None):
-
-            tmpView = View()
-            tmpView.setName(f.lookCase(table))
-            if table in self.colMap.keys():
-                schem = self.colMap[table][0]['schema']
-                if schema:
-                    tmpView.setSqlTableName(
-                                    f.splice(
-                                        DB.literalDelimeterStart,
-                                        schema,
-                                        DB.literalDelimeterEnd,
-                                        '.',
-                                        DB.literalDelimeterStart,
-                                        table,
-                                        DB.literalDelimeterEnd
-                                        )
-                                    )
-                else:
-                    tmpView.setSqlTableName(
-                    f.splice(
-                        DB.literalDelimeterStart,
-                        table,
-                        DB.literalDelimeterEnd
-                        )
-                    ) 
-                for field in self.colMap[table]:
-                    if field['type'] in ['int','bigint','smallint','double'] :
-                        dim = Dimension(dbColumn=field['col'])
-                        dim.setNumber()
-                        tmpView.addField(dim)
-                    elif field['type'] in ['char','varchar'] :
-                        dim = Dimension(dbColumn=field['col'])
-                        dim.setString()
-                        tmpView.addField(dim)
-                    elif field['type'] in ['date','timestamp','time'] :
-                        dim = DimensionGroup(dbColumn=field['col'])
-                        dim.setType('time')
-                        tmpView.addField(dim)
-                    elif field['type'] in ['bit']:
-                        dim = Dimension(dbColumn=field['col'])
-                        dim.setType('yesno')
-                        tmpView.addField(dim)
-                return tmpView
-            else:
-                logging.info(table + " Not Found Skipping view Creation....")
-                return None
-
-class viewFactory2:
-    '''
-        This is an alternative implementation which derives metadata from the looker API only
-        '''
-    def __init__(self):
-         pass
-
-
-    
-    def createView(self, tablePattern=None, catalog=None, schema=None, column=None):
-        tmp = View()
-        apiInstance = api.lookerAPIClient()
-        field_iteration = apiInstance.get_columns(schema=schema, table_name=tablePattern)
-        for field in field_iteration:
-            if 'NUMBER' in field['Data_Type']:
-                dim = Dimension(dbColumn=field['Column_Name'])
-                dim.setType('number')
-                tmp.addField(dim)
-        return tmp

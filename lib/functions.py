@@ -15,17 +15,3 @@ def removeSpace(string):  # removing special character / [|]<>,.?}{+=~!$%^&*()-
 
 def lookCase(string):
     return removeSpace(snakeCase(string))
-
-
-def stripID(identifier):
-    if identifier.startswith('includes'):
-        return '_'.join(identifier.split('_')[:-1])
-    elif identifier.startswith('links'):
-        return '_'.join(identifier.split('_')[:-1])
-    elif identifier.startswith('filters'):
-        return '_'.join(identifier.split('_')[:-1])
-    elif identifier.startswith('bind_filters'):
-        return '_'.join(identifier.split('_')[:-1])
-        #splits by underbar, then removes the final piece and reassmebbles
-    else:
-        return identifier

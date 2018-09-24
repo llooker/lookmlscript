@@ -39,3 +39,6 @@ Configure settings/settings.ini
 		
 Running:
 	python run.py 
+
+
+	## Schema = a dict that relates to the available options within a Lookml object, (e.g. check quickhelp in Looker IDE for available options or docs for more options)

@@ -7,6 +7,7 @@ old_code_fragments
 settings/templates/*
 output/*
 run.py
+msi_run.py
 
 ############## Generic Python Gitignore configurations ##############
 # Byte-compiled / optimized / DLL files

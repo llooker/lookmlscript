@@ -29,6 +29,7 @@ class lookerAPIClient:
 
     def post(self, call='', json_payload=None):
         response = requests.post(self.uri_full + call, headers=self.auth_headers, json=json_payload)
+        # print(reponse.request.url)
         return response
 
     def get(self, call=''):
@@ -38,6 +39,7 @@ class lookerAPIClient:
     def get_columns(self, limit=100000, 
                                     fields=
                                     ["columns.table_schema",
+                                    "columns.createduserid"
                                     "columns.table_name",
                                     "columns.column_name",
                                     "columns.data_type"],
@@ -58,3 +60,4 @@ class lookerAPIClient:
                                 "view": config.get('api', 'explore')
                                 }
                 return self.post(call='queries/run/json?force_production=true' + optional_arguments, json_payload=query_config)
+    
